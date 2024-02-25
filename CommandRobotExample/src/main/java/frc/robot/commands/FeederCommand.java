@@ -28,7 +28,7 @@ public class FeederCommand extends CommandBase{
   public void execute() {
     timer.start();
     while(timer.get() < secondsToRun) {
-        m_ballShooter.startFeedMotor(motorPower);
+        m_ballShooter.startFeederMotor(motorPower);
     }
   }
 

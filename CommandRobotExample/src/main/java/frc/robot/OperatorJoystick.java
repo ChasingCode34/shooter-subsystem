@@ -3,6 +3,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.*;
 import frc.robot.subsystems.BallShooter;
 
@@ -16,7 +17,7 @@ public class OperatorJoystick extends XboxController{
 
     public static OperatorJoystick getInstance() {
         if(instance == null) {
-            instance = new OperatorJoystick(Constants.OperatorConstants.kOperatorJoystickPort);
+            instance = new OperatorJoystick(OperatorConstants.kOperatorJoystickPort);
         }
         return instance;
     }

@@ -12,70 +12,93 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj2.command.PIDSubsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
 
-public class BallShooter extends SubsystemBase{
-    private static BallShooter instance;
+import frc.robot.Constants.ShooterSubsystemConstants;
 
-    private CANSparkMax shooterMotor = new CANSparkMax(Constants.ShooterSubsystemConstants.kMotor1Port, MotorType.kBrushless); //Improve names
-    private CANSparkMax feederMotor = new CANSparkMax(Constants.ShooterSubsystemConstants.kMotor2Port, MotorType.kBrushless);
-    private RelativeEncoder encoder_shooterMotor = shooterMotor.getEncoder();
-    private RelativeEncoder encoder_feederMotor = feederMotor.getEncoder();
-    private SparkMaxPIDController PID_shooterMotor = shooterMotor.getPIDController();
-    private SparkMaxPIDController PID_feederMotor = feederMotor.getPIDController();
-    private double setpoint;
+public class BallShooter extends SubsystemBase {
+  private static BallShooter instance;
 
-    public static BallShooter getInstance() {
-        if(instance == null) {
-            instance = new BallShooter();
-        }
-        return instance;
+  private CANSparkMax shooterMotor = new CANSparkMax(ShooterSubsystemConstants.kFeederMotorPort,
+      MotorType.kBrushless); // TODO: Remove Snake casing
+  private CANSparkMax feederMotor = new CANSparkMax(ShooterSubsystemConstants.kShooterMotorPort,
+      MotorType.kBrushless);
+  private RelativeEncoder shooterMotorEncoder = shooterMotor.getEncoder();
+  private RelativeEncoder feederMotorEncoder = feederMotor.getEncoder();
+  private SparkMaxPIDController shooterMotorPID = shooterMotor.getPIDController();
+  private SparkMaxPIDController feederMotorPID = feederMotor.getPIDController();
+  private double setpoint;
+
+  public static BallShooter getInstance() {
+    if (instance == null) {
+      instance = new BallShooter();
     }
+    return instance;
+  }
 
-    private BallShooter() {
-        shooterMotor.restoreFactoryDefaults();
-        feederMotor.restoreFactoryDefaults(); //TODO: Set idle mode of the motors
+  private BallShooter() {
+    shooterMotor.restoreFactoryDefaults();
+    feederMotor.restoreFactoryDefaults(); // TODO: Set inverted settings of the motors
 
-        shooterMotor.setIdleMode(IdleMode.kCoast);
-        feederMotor.setIdleMode(IdleMode.kCoast);
-        shooterMotor.burnFlash();
-        feederMotor.burnFlash();
-        encoder_shooterMotor.setPositionConversionFactor(Constants.ShooterSubsystemConstants.driveConversionPositionFactor); //TODO: Set position conversion factor and velocity conversion factors for both motors
-        encoder_shooterMotor.setVelocityConversionFactor(Constants.ShooterSubsystemConstants.driveConversionVelocityFactor);
-        encoder_feederMotor.setPositionConversionFactor(Constants.ShooterSubsystemConstants.driveConversionPositionFactor);
-        encoder_feederMotor.setVelocityConversionFactor(Constants.ShooterSubsystemConstants.driveConversionVelocityFactor);
-        
-    }
+    shooterMotor.setIdleMode(IdleMode.kCoast);
+    feederMotor.setInverted(ShooterSubsystemConstants.kInvertedFeederMotor);
+    shooterMotor.setInverted(ShooterSubsystemConstants.kInvertedShooterMotor);
+    shooterMotorEncoder.setPositionConversionFactor(ShooterSubsystemConstants.driveConversionPositionFactor);
+    shooterMotorEncoder.setVelocityConversionFactor(ShooterSubsystemConstants.driveConversionVelocityFactor);
+    feederMotorEncoder.setPositionConversionFactor(ShooterSubsystemConstants.driveConversionPositionFactor);
+    feederMotorEncoder.setVelocityConversionFactor(ShooterSubsystemConstants.driveConversionVelocityFactor);
 
-    //TODO: Adjust method names for the shoot and suck methods to be more precise
-    public void startShooterMotor(int motorPower) {
-        shooterMotor.set(motorPower); //TODO: Make a constant for the motor power
-        
-        
-    }
+    shooterMotor.burnFlash();
+    feederMotor.burnFlash();
 
-    public void startFeedMotor(int motorPower) {
-      feederMotor.set(motorPower);
-    }
+  }
 
-    public void stopShooterMotor() {
-        shooterMotor.stopMotor();
-    }
+  public void startShooterMotor(int motorPower) {
+    shooterMotor.set(MathUtil.clamp(motorPower, ShooterSubsystemConstants.kMinMotorPower,
+        ShooterSubsystemConstants.kMaxMotorPower)); // TODO: Make a constant for the motor power
 
-    public void stopFeederMotor() {
-       feederMotor.stopMotor();
-    }
+  }
 
-    public void setSetpointShooterMotor(double setpoint) {
-      this.setpoint = setpoint;
-      encoder_shooterMotor.setPosition(setpoint);
-    }
+  public void startFeederMotor(int motorPower) {
+    feederMotor.set(MathUtil.clamp(motorPower, ShooterSubsystemConstants.kMinMotorPower,
+        ShooterSubsystemConstants.kMaxMotorPower));
+  }
 
-    public void setSetpointFeederMotor(double setpoint) {
-      this.setpoint = setpoint;
-      encoder_feederMotor.setPosition(setpoint);
-    }
+  public void stopShooterMotor() {
+    shooterMotor.stopMotor();
+  }
 
+  public void stopFeederMotor() {
+    feederMotor.stopMotor();
+  }
+
+  public double getShooterVelocity() {
+    return shooterMotorEncoder.getVelocity();
+  }
+
+  public double getShooterPosition() {
+    return shooterMotorEncoder.getPosition();
+  }
+
+  public double getFeederVelocity() {
+    return feederMotorEncoder.getVelocity();
+  }
+
+  public double getFeederPosition() {
+    return feederMotorEncoder.getPosition();
+  }
+
+  public void setSetpointShooterMotor(double setpoint) {
+    this.setpoint = setpoint;
+    shooterMotorEncoder.setPosition(setpoint);
+  }
+
+  public void setSetpointFeederMotor(double setpoint) {
+    this.setpoint = setpoint;
+    feederMotorEncoder.setPosition(setpoint);
+  }
+
+  
 
 }
